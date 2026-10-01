@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Latihan Ulang: {{ quiz.title }}</h1>
+            <p class="text-muted mb-0">Hanya menampilkan soal yang sebelumnya dijawab salah atau kosong.</p>
+        </div>
+        <div class="progress-indicator">
+            Soal: {{ questions|length }}
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    Nilai latihan ini tidak akan mengganti nilai resmi Anda. Gunakan kesempatan ini untuk belajar dari kesalahan.
+</div>
+
+<form id="practice-form" action="{{ url_for('student.submit_practice', quiz_id=quiz.id) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="questions-container mt-4">
+        {% for q in questions %}
+        <div class="card mb-4 question-block" id="qb-{{ q.id }}">
+            <div class="fw-bold mb-3">{{ q.text }}</div>
+            
+            <div class="student-choices">
+                {% for c in q.choices %}
+                <label class="student-choice-label">
+                    <input type="radio" name="q_{{ q.id }}" value="{{ c.id }}">
+                    <span class="choice-bubble">{{ c.label }}</span>
+                    <span class="choice-text">{{ c.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="submit-bar text-center">
+        <a href="{{ url_for('student.quiz_page', quiz_id=quiz.id) }}" class="btn btn-secondary me-2">Batal</a>
+        <button type="submit" class="btn btn-primary btn-lg">Kirim Latihan</button>
+    </div>
+</form>
+{% endblock %}

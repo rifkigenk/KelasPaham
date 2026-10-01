@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4 text-center">
+    <h1>Hasil Kuis: {{ quiz.title }}</h1>
+    <p class="text-muted mb-0">Peserta: {{ nickname }}</p>
+</div>
+
+<div class="card text-center mb-4">
+    <div class="score-display">
+        <div class="score-circle">
+            {{ submission.score }}
+        </div>
+        <p class="mt-2 text-muted">Nilai Akhir Anda</p>
+    </div>
+    
+    <div class="stats-row justify-content-center mt-3">
+        <div class="stat-item text-success">
+            <div class="fw-bold fs-4">{{ submission.correct_count }}</div>
+            <div class="small">Benar</div>
+        </div>
+        <div class="stat-item text-danger">
+            <div class="fw-bold fs-4">{{ submission.wrong_count }}</div>
+            <div class="small">Salah</div>
+        </div>
+        <div class="stat-item text-secondary">
+            <div class="fw-bold fs-4">{{ submission.empty_count }}</div>
+            <div class="small">Kosong</div>
+        </div>
+    </div>
+</div>
+
+{% if practice %}
+<div class="card bg-light border-primary mb-4">
+    <h3 class="text-primary">Hasil Latihan Ulang</h3>
+    <p class="mb-1">Anda mendapatkan skor latihan <strong>{{ practice.score }}</strong> dari soal-soal yang diulang.</p>
+    <p class="small text-muted mb-0">Catatan: Nilai ini hanya untuk latihan dan tidak mengubah nilai resmi di atas.</p>
+</div>
+{% elif submission.wrong_count > 0 or submission.empty_count > 0 %}
+<div class="card mb-4 text-center">
+    <h3>Latihan Ulang</h3>
+    <p>Ada soal yang masih salah atau kosong. Anda dapat berlatih lagi untuk materi tersebut.</p>
+    <a href="{{ url_for('student.practice_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Mulai Latihan</a>
+</div>
+{% else %}
+<div class="card mb-4 text-center text-success">
+    <h3>Sempurna!</h3>
+    <p>Semua jawaban Anda benar. Tidak ada materi yang perlu dilatih ulang.</p>
+</div>
+{% endif %}
+
+<h2 class="mb-3">Detail Jawaban & Pembahasan</h2>
+<div class="questions-container">
+    {% for d in details %}
+    <div class="card mb-3 {% if d.is_user_correct %}border-success{% elif d.is_user_correct == 0 %}border-danger{% else %}border-warning{% endif %}">
+        <div class="fw-bold mb-2">Soal {{ loop.index }}: {{ d.question_text }}</div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6 mb-2">
+                <div class="small text-muted">Jawaban Anda:</div>
+                {% if d.user_answer_text %}
+                    <div class="p-2 rounded {% if d.is_user_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                        {{ d.user_answer_label }}. {{ d.user_answer_text }}
+                        {% if d.is_user_correct %} (Benar) {% else %} (Salah) {% endif %}
+                    </div>
+                {% else %}
+                    <div class="p-2 rounded bg-secondary text-white">Kosong (Tidak dijawab)</div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-6 mb-2">
+                <div class="small text-muted">Jawaban Benar:</div>
+                <div class="p-2 rounded bg-light border">
+                    {{ d.correct_answer_label }}. {{ d.correct_answer_text }}
+                </div>
+            </div>
+        </div>
+        
+        {% if d.explanation %}
+        <div class="mt-3 p-3 bg-light rounded">
+            <strong>Pembahasan:</strong><br>
+            {{ d.explanation }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4 text-center">
+    <h1 class="mb-2">{{ quiz.title }}</h1>
+    <span class="status-badge status-{{ quiz.status|lower }}">Status: {{ quiz.status }}</span>
+    
+    <div class="join-code-box mt-4">
+        <p class="text-muted mb-1">Minta siswa bergabung di <strong>{{ request.host_url }}</strong> dengan kode:</p>
+        <div class="code-display">{{ quiz.code }}</div>
+    </div>
+</div>
+
+<div class="card text-center mb-4">
+    <div class="stats-row justify-content-center">
+        <div class="stat-item">
+            <div class="stat-value" id="part-count">{{ participants_count }}</div>
+            <div class="stat-label">Siswa Bergabung</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="sub-count">{{ submissions_count }}</div>
+            <div class="stat-label">Sudah Mengirim</div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        {% if quiz.status == 'WAITING' %}
+        <form action="{{ url_for('teacher.change_status', quiz_id=quiz.id) }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="ACTIVE">
+            <button type="submit" class="btn btn-success btn-lg">Mulai Kuis</button>
+        </form>
+        {% elif quiz.status == 'ACTIVE' %}
+        <form action="{{ url_for('teacher.change_status', quiz_id=quiz.id) }}" method="POST" class="d-inline" onsubmit="return confirmClose()">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="CLOSED">
+            <button type="submit" class="btn btn-danger btn-lg">Tutup Kuis (Lihat Hasil)</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Daftar Peserta</h2>
+        <span id="sync-status" class="badge bg-success">Tersinkronisasi</span>
+    </div>
+    <div id="participants-list" class="participants-grid">
+        <div class="text-center text-muted w-100 py-3">Memuat data peserta...</div>
+    </div>
+</div>
+<div id="quiz-data" data-quiz-id="{{ quiz.id }}" data-quiz-status="{{ quiz.status }}" style="display: none;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const dataContainer = document.getElementById('quiz-data');
+    const quizId = Number(dataContainer.getAttribute('data-quiz-id'));
+    const currentStatus = dataContainer.getAttribute('data-quiz-status');
+    
+    // Polling JavaScript murni tanpa jQuery/CDN
+    function fetchUpdates() {
+        fetch(`/teacher/api/status/${quizId}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Gagal mengambil data");
+                return response.json();
+            })
+            .then(data => {
+                // Update statistik
+                document.getElementById('part-count').innerText = data.participants_count;
+                document.getElementById('sub-count').innerText = data.submissions_count;
+                
+                // Update daftar peserta
+                const listContainer = document.getElementById('participants-list');
+                if (data.participants.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center text-muted w-100 py-3">Belum ada siswa yang bergabung.</div>';
+                } else {
+                    listContainer.innerHTML = '';
+                    data.participants.forEach(p => {
+                        const statusClass = p.status === 'Selesai' ? 'text-success' : 'text-warning';
+                        const icon = p.status === 'Selesai' ? '✓' : '⌛';
+                        
+                        const div = document.createElement('div');
+                        div.className = 'participant-card';
+                        div.innerHTML = `
+                            <div class="fw-bold">${p.nickname}</div>
+                            <div class="small ${statusClass}">${icon} ${p.status}</div>
+                        `;
+                        listContainer.appendChild(div);
+                    });
+                }
+                
+                document.getElementById('sync-status').innerText = 'Tersinkronisasi';
+                document.getElementById('sync-status').className = 'badge bg-success';
+                
+                // Jika status kuis berubah (misal ditutup lewat tab lain), muat ulang
+                if (data.status !== currentStatus) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching updates:', error);
+                document.getElementById('sync-status').innerText = 'Gagal sinkron';
+                document.getElementById('sync-status').className = 'badge bg-danger';
+            });
+    }
+
+    // Jalankan polling setiap 3 detik
+    setInterval(fetchUpdates, 3000);
+    // Jalankan sekali saat load
+    fetchUpdates();
+    
+    function confirmClose() {
+        const parts = parseInt(document.getElementById('part-count').innerText);
+        const subs = parseInt(document.getElementById('sub-count').innerText);
+        const unsubs = parts - subs;
+        
+        let msg = "Yakin ingin menutup kuis? Setelah ditutup, siswa tidak dapat mengirim jawaban lagi.";
+        if (unsubs > 0) {
+            msg += `\n\nPERINGATAN: Ada ${unsubs} siswa yang belum mengirim jawaban.`;
+        }
+        return confirm(msg);
+    }
+</script>
+{% endblock %}

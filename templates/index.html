@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Evaluasi Cepat, <br>Belajar Lebih Paham.</h1>
+        <p class="hero-subtitle">KelasPaham adalah aplikasi kuis interaktif yang membantu guru menilai pemahaman siswa dengan cepat dan memberikan kesempatan siswa untuk berlatih kembali.</p>
+    </div>
+</div>
+
+<div class="split-layout">
+    <div class="card card-primary">
+        <h2>Gabung Kuis</h2>
+        <p>Masukkan nama dan kode kuis dari guru Anda.</p>
+        <form action="{{ url_for('student.join_quiz') }}" method="POST" class="mt-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="nickname">Nama Panggilan</label>
+                <input type="text" id="nickname" name="nickname" required placeholder="Contoh: Budi S." autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="code">Kode Kuis</label>
+                <input type="text" id="code" name="code" required placeholder="Contoh: A1B2C" autocomplete="off" style="text-transform: uppercase;">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Mulai Belajar</button>
+        </form>
+    </div>
+
+    <div class="card card-secondary">
+        <h2>Buat Kuis Baru (Guru)</h2>
+        <p>Buat soal dan bagikan kode kuis kepada siswa di kelas.</p>
+        <form action="{{ url_for('teacher.create_quiz') }}" method="POST" class="mt-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="title">Judul Kuis</label>
+                <input type="text" id="title" name="title" required placeholder="Contoh: Kuis Dasar Python">
+            </div>
+            <div class="form-group">
+                <label for="subject">Mata Pelajaran (Opsional)</label>
+                <input type="text" id="subject" name="subject" placeholder="Contoh: Pemrograman">
+            </div>
+            <div class="form-group">
+                <label for="description">Deskripsi Singkat (Opsional)</label>
+                <textarea id="description" name="description" rows="2" placeholder="Petunjuk pengerjaan kuis..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Buat Kuis</button>
+        </form>
+    </div>
+</div>
+
+<div class="steps-section mt-5">
+    <h2 class="text-center mb-4">Cara Kerja KelasPaham</h2>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Guru Membuat Kuis</h3>
+            <p>Guru menyusun soal, kunci jawaban, dan pembahasan di dashboard yang aman.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Siswa Mengerjakan</h3>
+            <p>Siswa bergabung menggunakan kode singkat dan mengerjakan soal di HP mereka.</p>
+        </div>
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Laporan & Latihan Ulang</h3>
+            <p>Guru melihat statistik kelas. Siswa dapat berlatih kembali dari soal yang salah.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

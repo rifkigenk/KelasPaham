@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card text-center" style="max-width: 500px; margin: 40px auto;">
+    <div class="spinner mb-4"></div>
+    <h2 class="mb-3">{{ message }}</h2>
+    <p class="text-muted mb-4">Halaman akan otomatis diperbarui saat guru mengubah status kuis.</p>
+    
+    <div class="quiz-info-box text-start bg-light p-3 rounded">
+        <strong>Judul Kuis:</strong> {{ quiz.title }}<br>
+        <strong>Mata Pelajaran:</strong> {{ quiz.subject or '-' }}<br>
+        {% if quiz.description %}
+        <strong>Deskripsi:</strong> {{ quiz.description }}
+        {% endif %}
+    </div>
+</div>
+<div id="quiz-data" data-quiz-id="{{ quiz.id }}" data-quiz-status="{{ quiz.status }}" style="display: none;"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const dataContainer = document.getElementById('quiz-data');
+    const quizId = Number(dataContainer.getAttribute('data-quiz-id'));
+    const initialStatus = dataContainer.getAttribute('data-quiz-status');
+    
+    function checkStatus() {
+        fetch(`/student/api/status/${quizId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== initialStatus) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => console.error("Error polling status:", error));
+    }
+    
+    // Polling setiap 3 detik
+    setInterval(checkStatus, 3000);
+</script>
+{% endblock %}

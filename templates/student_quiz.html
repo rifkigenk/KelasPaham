@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1>{{ quiz.title }}</h1>
+            <p class="text-muted mb-0">Peserta: {{ nickname }}</p>
+        </div>
+        <div class="progress-indicator">
+            Dijawab: <span id="answered-count">0</span> / {{ questions|length }}
+        </div>
+    </div>
+</div>
+
+<form id="quiz-form" data-quiz-id="{{ quiz.id }}" data-total-questions="{{ questions|length }}" action="{{ url_for('student.submit_quiz', quiz_id=quiz.id) }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="questions-container">
+        {% for q in questions %}
+        <div class="card mb-4 question-block" id="qb-{{ q.id }}">
+            <div class="fw-bold mb-3">Soal {{ loop.index }}: {{ q.text }}</div>
+            
+            <div class="student-choices">
+                {% for c in q.choices %}
+                <label class="student-choice-label">
+                    <input type="radio" name="q_{{ q.id }}" value="{{ c.id }}" onchange="updateProgress()">
+                    <span class="choice-bubble">{{ c.label }}</span>
+                    <span class="choice-text">{{ c.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="submit-bar">
+        <button type="button" class="btn btn-primary btn-lg w-100" onclick="confirmSubmit()">Kirim Jawaban</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const quizForm = document.getElementById('quiz-form');
+    const totalQuestions = Number(quizForm.getAttribute('data-total-questions'));
+    const quizId = Number(quizForm.getAttribute('data-quiz-id'));
+    
+    function updateProgress() {
+        const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+        document.getElementById('answered-count').innerText = answered;
+    }
+    
+    function confirmSubmit() {
+        const answered = document.querySelectorAll('input[type="radio"]:checked').length;
+        const empty = totalQuestions - answered;
+        
+        let msg = `Anda sudah menjawab ${answered} dari ${totalQuestions} soal.`;
+        if (empty > 0) {
+            msg += `\n\nPERINGATAN: Ada ${empty} soal yang masih kosong.`;
+        }
+        msg += "\n\nYakin ingin mengirim jawaban sekarang?";
+        
+        if (confirm(msg)) {
+            document.getElementById('quiz-form').submit();
+        }
+    }
+    
+    // Polling untuk mengecek jika guru tiba-tiba menutup kuis
+    function checkStatus() {
+        fetch(`/student/api/status/${quizId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'CLOSED') {
+                    // Kuis ditutup paksa, refresh untuk melihat hasil (meskipun ditolak backend jika submit, tetap diarahkan ke result)
+                    window.location.reload();
+                }
+            });
+    }
+    
+    setInterval(checkStatus, 5000);
+</script>
+{% endblock %}

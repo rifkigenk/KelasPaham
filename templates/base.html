@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KelasPaham{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="/" class="logo">
+                <span class="logo-icon">✨</span>
+                Kelas<span class="text-primary">Paham</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Beranda</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container text-center">
+            <p>&copy; 2026 KelasPaham. Dibuat dengan 💚 untuk pembelajaran.</p>
+        </div>
+    </footer>
+
+    <!-- Agar dapat dibaca file js eksternal jika dibutuhkan -->
+    <script>
+        const csrf_token = "{{ csrf_token() }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

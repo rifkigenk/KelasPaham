@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="status-badge status-closed mb-2">Status: CLOSED</span>
+            <h1>Laporan Kuis: {{ quiz.title }}</h1>
+        </div>
+        <a href="{{ url_for('teacher.export_csv', quiz_id=quiz.id) }}" class="btn btn-primary">Unduh Rekap CSV</a>
+    </div>
+</div>
+
+<div class="stats-row mb-4">
+    <div class="stat-item card">
+        <div class="stat-value">{{ submissions|length }}</div>
+        <div class="stat-label">Pengiriman Resmi</div>
+    </div>
+    
+    {% set scores = submissions|map(attribute='score')|list %}
+    {% if scores %}
+    <div class="stat-item card">
+        <div class="stat-value">{{ (scores|sum / scores|length)|round(2) }}</div>
+        <div class="stat-label">Rata-rata Nilai</div>
+    </div>
+    <div class="stat-item card">
+        <div class="stat-value">{{ scores|max }}</div>
+        <div class="stat-label">Nilai Tertinggi</div>
+    </div>
+    <div class="stat-item card">
+        <div class="stat-value">{{ scores|min }}</div>
+        <div class="stat-label">Nilai Terendah</div>
+    </div>
+    {% else %}
+    <div class="stat-item card">
+        <div class="stat-value">-</div>
+        <div class="stat-label">Rata-rata Nilai</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card mb-5">
+    <h2>Analisis Butir Soal</h2>
+    <p class="text-muted mb-4">Statistik ini dihitung dari pengiriman resmi pertama tiap siswa. Gunakan data ini untuk menentukan materi yang perlu dibahas ulang.</p>
+    
+    {% if not submissions %}
+        <div class="alert alert-info">Belum ada pengiriman jawaban, grafik tidak dapat ditampilkan.</div>
+    {% else %}
+        <div class="charts-container">
+            {% for s in stats %}
+            <div class="chart-row mb-4">
+                <div class="chart-question-text fw-bold mb-2">Soal {{ loop.index }}: {{ s.text }}</div>
+                
+                {% set total = s.correct + s.wrong + s.empty %}
+                {% set p_correct = (s.correct / total * 100)|round if total > 0 else 0 %}
+                {% set p_wrong = (s.wrong / total * 100)|round if total > 0 else 0 %}
+                {% set p_empty = (s.empty / total * 100)|round if total > 0 else 0 %}
+                
+                <div class="bar-chart-container">
+                    <div class="bar-chart-bar bg-success" style="width: {{ p_correct }}%;"></div>
+                    <div class="bar-chart-bar bg-danger" style="width: {{ p_wrong }}%;"></div>
+                    <div class="bar-chart-bar bg-secondary" style="width: {{ p_empty }}%;"></div>
+                </div>
+                
+                <div class="chart-legend mt-2 small d-flex gap-3">
+                    <span class="text-success">■ Benar: {{ s.correct }} ({{ p_correct }}%)</span>
+                    <span class="text-danger">■ Salah: {{ s.wrong }} ({{ p_wrong }}%)</span>
+                    <span class="text-secondary">■ Kosong: {{ s.empty }} ({{ p_empty }}%)</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Nilai Peserta</h2>
+    {% if not submissions %}
+        <p class="text-muted">Tidak ada data peserta.</p>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nama Panggilan</th>
+                        <th class="text-center">Nilai</th>
+                        <th class="text-center">Benar</th>
+                        <th class="text-center">Salah</th>
+                        <th class="text-center">Kosong</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in submissions %}
+                    <tr>
+                        <td>{{ sub.nickname }}</td>
+                        <td class="text-center fw-bold">{{ sub.score }}</td>
+                        <td class="text-center text-success">{{ sub.correct_count }}</td>
+                        <td class="text-center text-danger">{{ sub.wrong_count }}</td>
+                        <td class="text-center text-secondary">{{ sub.empty_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

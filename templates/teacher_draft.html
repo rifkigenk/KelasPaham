@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header mb-4">
+    <div>
+        <span class="status-badge status-draft">Status: DRAFT</span>
+        <h1 class="mt-2">{{ quiz.title }}</h1>
+        <p class="text-muted">Mata Pelajaran: {{ quiz.subject or '-' }}</p>
+    </div>
+    
+    {% if request.args.get('token') %}
+    <div class="alert alert-warning" style="max-width: 400px;">
+        <strong>Simpan Tautan Ini!</strong>
+        <p class="small mt-1 mb-2">Ini adalah satu-satunya tautan untuk mengelola kuis ini di perangkat lain. Salin dan simpan di tempat aman.</p>
+        <div class="d-flex gap-2">
+            <input type="text" id="manageLink" class="form-control" value="{{ request.host_url }}teacher/manage/{{ quiz.id }}?token={{ request.args.get('token') }}" readonly>
+            <button type="button" class="btn btn-primary" onclick="copyManageLink()">Salin</button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h3">Terbitkan Kuis</h2>
+            <p class="text-muted mb-0">Setelah diterbitkan, siswa dapat mulai bergabung ke ruang tunggu.</p>
+        </div>
+        <form action="{{ url_for('teacher.change_status', quiz_id=quiz.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="WAITING">
+            <button type="submit" class="btn btn-success" {% if not questions %}disabled{% endif %}>
+                Terbitkan Kuis
+            </button>
+        </form>
+    </div>
+    {% if not questions %}
+    <div class="alert alert-error mt-3 mb-0">
+        Kuis harus memiliki minimal 1 soal sebelum diterbitkan.
+    </div>
+    {% endif %}
+</div>
+
+<div class="split-layout">
+    <div class="card">
+        <h2>Daftar Soal ({{ questions|length }})</h2>
+        {% if not questions %}
+            <p class="text-muted mt-3">Belum ada soal. Silakan tambahkan soal pertama di form sebelah.</p>
+        {% else %}
+            <div class="questions-list mt-3">
+                {% for q in questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="fw-bold">Soal {{ loop.index }}</span>
+                        <span class="badge bg-secondary">{{ q.topic or 'Umum' }}</span>
+                    </div>
+                    <p class="mt-2">{{ q.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Tambah Soal Baru</h2>
+        <form action="{{ url_for('teacher.add_question', quiz_id=quiz.id) }}" method="POST" class="mt-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="form-group">
+                <label for="text">Pertanyaan *</label>
+                <textarea id="text" name="text" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="topic">Topik (Opsional)</label>
+                <input type="text" id="topic" name="topic" placeholder="Contoh: Variabel">
+            </div>
+
+            <div class="choices-group">
+                <p class="fw-bold mb-2">Pilihan Jawaban *</p>
+                
+                <div class="choice-input">
+                    <input type="radio" name="correct_choice" value="A" id="correct_a" required>
+                    <label for="correct_a" class="sr-only">A adalah jawaban benar</label>
+                    <span class="choice-label">A</span>
+                    <input type="text" name="choice_a" class="form-control" required placeholder="Pilihan A">
+                </div>
+                
+                <div class="choice-input">
+                    <input type="radio" name="correct_choice" value="B" id="correct_b">
+                    <label for="correct_b" class="sr-only">B adalah jawaban benar</label>
+                    <span class="choice-label">B</span>
+                    <input type="text" name="choice_b" class="form-control" required placeholder="Pilihan B">
+                </div>
+                
+                <div class="choice-input">
+                    <input type="radio" name="correct_choice" value="C" id="correct_c">
+                    <label for="correct_c" class="sr-only">C adalah jawaban benar</label>
+                    <span class="choice-label">C</span>
+                    <input type="text" name="choice_c" class="form-control" required placeholder="Pilihan C">
+                </div>
+                
+                <div class="choice-input">
+                    <input type="radio" name="correct_choice" value="D" id="correct_d">
+                    <label for="correct_d" class="sr-only">D adalah jawaban benar</label>
+                    <span class="choice-label">D</span>
+                    <input type="text" name="choice_d" class="form-control" required placeholder="Pilihan D">
+                </div>
+                <p class="small text-muted mt-2">Pilih radio button untuk menandai jawaban yang benar.</p>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="explanation">Pembahasan Singkat (Opsional)</label>
+                <textarea id="explanation" name="explanation" rows="2" placeholder="Penjelasan jawaban benar..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mt-2">Simpan Soal</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyManageLink() {
+    var copyText = document.getElementById("manageLink");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("Tautan disalin ke clipboard!");
+}
+</script>
+{% endblock %}
