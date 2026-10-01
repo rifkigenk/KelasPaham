@@ -58,3 +58,7 @@ def create_app(test_config=None):
         return render_template('error.html', error_msg="Terjadi kesalahan pada sistem KelasPaham. Silakan coba lagi nanti."), 500
 
     return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(host='0.0.0.0', port=8080, debug=True)
